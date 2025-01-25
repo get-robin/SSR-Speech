@@ -11,11 +11,11 @@ import subprocess
 import tempfile
 import typing as tp
 
-from audiocraft.data.audio import audio_write
-from audiocraft.data.audio_utils import convert_audio
+# from audiocraft.data.audio import audio_write
+# from audiocraft.data.audio_utils import convert_audio
 import flashy
 import torch
-import torchmetrics
+# import torchmetrics
 
 from ..environment import AudioCraftEnvironment
 

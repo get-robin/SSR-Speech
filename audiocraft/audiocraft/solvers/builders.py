@@ -13,8 +13,8 @@ from enum import Enum
 import logging
 import typing as tp
 
-import dora
-import flashy
+# import dora
+# import flashy
 import omegaconf
 import torch
 from torch import nn
@@ -26,8 +26,9 @@ except ImportError:
     from torch.optim.lr_scheduler import _LRScheduler as LRScheduler
 
 from .base import StandardSolver
-from .. import adversarial, data, losses, metrics, optim
-from ..utils.utils import dict_from_config, get_loader
+# from .. import adversarial, data, losses, metrics, optim
+from .. import losses, metrics, optim
+# from ..utils.utils import dict_from_config, get_loader
 
 
 logger = logging.getLogger(__name__)

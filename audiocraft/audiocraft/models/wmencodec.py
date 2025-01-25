@@ -354,32 +354,6 @@ class WMEncodecModel(WMCompressionModel):
         out = self.postprocess(out, scale)
         # out contains extra padding added by the encoder and decoder
         return out
-    
-    def wmdecode(self, codes: torch.Tensor, labels: torch.Tensor, wavform: torch.Tensor, scale: tp.Optional[torch.Tensor] = None):
-        """Decode the given codes to a reconstructed representation, using the scale to perform
-        audio denormalization if needed.
-
-        Args:
-            codes (torch.Tensor): Int tensor of shape [B, K, T]
-            labels (torch.Tensor): Int tensor of shape [B, T]
-            wavform (torch.Tensor): Float tensor of shape [B, C, T']
-            scale (torch.Tensor, optional): Float tensor containing the scale value.
-
-        Returns:
-            out (torch.Tensor): Float tensor of shape [B, C, T], the reconstructed audio.
-        """
-        emb = self.decode_latent(codes)
-        out, mark = self.wmdecoder(emb, labels, wavform)
-        out = self.postprocess(out, scale)
-        # out contains extra padding added by the encoder and decoder
-        return out, mark
-
-    def detect_watermark(self, x: torch.Tensor):
-        assert x.dim() == 3
-        m = self.wmdecoder.wm_encoder(x)
-        m = self.wmdecoder.wm_predictor(m).squeeze(-1)
-        m = torch.argmax(m, dim=-1)
-        return m
 
     def decode_latent(self, codes: torch.Tensor):
         """Decode from the discrete codes to continuous latent space."""

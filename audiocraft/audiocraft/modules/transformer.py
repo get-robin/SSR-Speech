@@ -14,14 +14,14 @@ Unlike regular PyTorch Transformer, we make the hard choice that batches are fir
 """
 
 import typing as tp
-
-from einops import rearrange
+#
+# from einops import rearrange
 import torch
 import torch.nn as nn
-from torch.nn import functional as F
-from torch.utils.checkpoint import checkpoint as torch_checkpoint
-from xformers import ops
-
+# from torch.nn import functional as F
+# from torch.utils.checkpoint import checkpoint as torch_checkpoint
+# from xformers import ops
+#
 from .rope import RotaryEmbedding
 from .streaming import StreamingModule
 

@@ -13,9 +13,10 @@ from data.tokenizer import (
 )
 import time
 
-
+# TODO this doesn't seem like a ton of stuff - the bulk of the work being done in model.inference
+# TODO figure out structure of prompt_text, mask_interval
 @torch.no_grad()
-def inference_one_sample(model, model_args, phn2num, text_tokenizer, audio_tokenizer, audio_fn, prompt_text, target_text, mask_interval, cfg_coef, cfg_stride, aug_text, aug_context, use_watermark, tts, device, decode_config):
+def inference_one_sample(model, model_args, phn2num, text_tokenizer, audio_tokenizer, audio_fn, prompt_text, target_text, mask_interval, cfg_coef, cfg_stride, aug_text, aug_context, device, decode_config):
     # phonemize
     text_tokens = [phn2num[phn] for phn in
             tokenize_text(
@@ -40,13 +41,16 @@ def inference_one_sample(model, model_args, phn2num, text_tokenizer, audio_token
 
     # forward
     stime = time.time()
+    # TODO maybe try removing model.inference and getting the remaining code to work
+    # TODO and then printing out all the inputs to it and seeing what the various pieces do up until this point
     encoded_frames, marks, masks, ori_masks = model.inference(
+        # TODO note that all of these device will be 'cpu'
         text_tokens.to(device),
         text_tokens_lens.to(device),
         prompt_text_tokens.to(device),
         prompt_text_tokens_lens.to(device),
-        original_audio[...,:model_args.n_codebooks].to(device), # [1,T,8]
-        original_audio[...,:model_args.n_codebooks].to(device), # [1,T,8]
+        original_audio[...,:model_args.n_codebooks].to(device),  # [1,T,8]
+        original_audio[...,:model_args.n_codebooks].to(device),  # [1,T,8]
         mask_interval=mask_interval.unsqueeze(0).to(device),
         top_k=decode_config['top_k'],
         top_p=decode_config['top_p'],
@@ -62,29 +66,8 @@ def inference_one_sample(model, model_args, phn2num, text_tokenizer, audio_token
         encoded_frames = encoded_frames[0]
     logging.info(f"generated encoded_frames.shape: {encoded_frames.shape}, which is {encoded_frames.shape[-1]/decode_config['codec_sr']} sec.")
 
-    # decode 
-    if use_watermark:
-        multiple = 320
-        wav, sr = torchaudio.load(audio_fn)
-        current_length = wav.shape[-1]
-        padding_length = (multiple - (current_length % multiple)) % multiple
-        if padding_length > 0:
-            wav = F.pad(wav, (0, padding_length), "constant", 0)
-        new_wav = torch.zeros(1, encoded_frames.shape[-1]*320) # codec hz
-        
-        ori_non_mask_intervals = [(max(item[0],0), item[1]) for item in ori_masks]
-        non_mask_intervals = [(max(item[0],0), item[1]) for item in masks]
-        for i in range(len(ori_non_mask_intervals)):
-            new_wav[:, non_mask_intervals[i][0]*320:non_mask_intervals[i][1]*320] = wav[:, ori_non_mask_intervals[i][0]*320:ori_non_mask_intervals[i][1]*320]
+    generated_sample = audio_tokenizer.decode(encoded_frames, scale)
 
-        generated_sample = audio_tokenizer.wmdecode(encoded_frames, marks.to(encoded_frames.device), new_wav.unsqueeze(0).to(encoded_frames.device), scale)
-
-    else:
-        generated_sample = audio_tokenizer.decode(encoded_frames, scale)
-        
-    if tts:
-        generated_sample = generated_sample[:,:, masks[0][1]*320:]
-            
     return generated_sample
 
 

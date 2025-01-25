@@ -9,7 +9,6 @@ from typing import Dict, Optional
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torchmetrics.classification import MulticlassAccuracy
 
 from .modules.utils import make_pad_mask
 
@@ -84,6 +83,7 @@ def topk_sampling(logits, top_k=10, top_p=1.0, temperature=1.0):
     # Sample
     token = torch.multinomial(F.softmax(logits, dim=-1), num_samples=1)
     return token
+
 
 class SSR_Speech(
         nn.Module,
@@ -176,16 +176,6 @@ class SSR_Speech(
             [
                 nn.Sequential(nn.Linear(self.args.d_model, self.args.audio_vocab_size//2), nn.GELU(), nn.Linear(self.args.audio_vocab_size//2, self.n_audio_tokens[k])) for k in range(self.args.n_codebooks)
             ]
-        )
-        
-        self.accuracy_metrics = nn.ModuleList(
-            [MulticlassAccuracy(
-                self.n_audio_tokens[k],
-                top_k=10,
-                average="micro",
-                multidim_average="global",
-                ignore_index=None,
-            ) for k in range(self.args.n_codebooks)]
         )
 
     def embed_y(self, cated_y):
@@ -349,7 +339,6 @@ class SSR_Speech(
         
         loss = []
         ntokens = []
-        top10acc = []
 
         for k, (logit, target, mask, tmp_mask) in enumerate(zip(logits, targets, masks, tmp_masks)):
             logit = logit.reshape(-1, logit.size(-1)) # B*S card
@@ -358,7 +347,6 @@ class SSR_Speech(
             tmp_mask = tmp_mask.reshape(-1).bool()
 
             loss.append(F.cross_entropy(logit[tmp_mask], target[tmp_mask], reduction='mean'))
-            top10acc.append(self.accuracy_metrics[k](logit[tmp_mask].detach(), target[tmp_mask]))
             ntokens.append(len(target[mask]))
         
         all_ntokens = sum(ntokens)
@@ -367,14 +355,10 @@ class SSR_Speech(
         else:
             codebook_weight = [1.] * self.args.n_codebooks
         loss = sum([l*nt*cw for l, nt, cw in zip(loss, ntokens, codebook_weight)])
-        top10acc_by_codebook = [t10a*nt for t10a, nt in zip(top10acc, ntokens)]
-        top10acc = sum(top10acc_by_codebook)
         ntokens = torch.tensor(all_ntokens).to(logits.device)
 
         return {
             "loss": loss,
-            "top10acc": top10acc,
-            "top10acc_by_codebook": top10acc_by_codebook,
             "effective_ntoken": ntokens,
         }
 
@@ -500,16 +484,17 @@ class SSR_Speech(
         new_y_lens = cated_y.shape[1]
         
         return cated_y, new_y_lens
-    
+    # TODO this is the meat of it
+    # TODO these are the things I really need to figure out how to create
     def inference(
         self,
-        x: torch.Tensor,
-        x_lens: torch.Tensor,
-        prompt_x: torch.Tensor,
-        prompt_x_lens: torch.Tensor,
-        y: torch.Tensor,
-        prompt: torch.Tensor,
-        mask_interval: list[torch.Tensor],
+        x: torch.Tensor,  # text_tokens
+        x_lens: torch.Tensor,  # text_tokens_lens
+        prompt_x: torch.Tensor,  # prompt_text_tokens
+        prompt_x_lens: torch.Tensor,  # prompt_text_tokens_lens
+        y: torch.Tensor,  # original_audio
+        prompt: torch.Tensor,  # original_audio
+        mask_interval: list[torch.Tensor],  # mask_interval
         top_k: int=-100,
         top_p: float=1.0,
         temperature: float=1.0,

@@ -104,7 +104,7 @@ class AudioTokenizer:
         device: Any = None,
         signature = None
     ) -> None:
-        from audiocraft.solvers import WMCompressionSolver
+        from audiocraft.audiocraft.solvers.wmcompression import WMCompressionSolver
         model = WMCompressionSolver.model_from_checkpoint(signature).eval()
         self.sample_rate = model.sample_rate
         self.channels = model.channels
@@ -128,15 +128,6 @@ class AudioTokenizer:
 
     def decode(self, frames: torch.Tensor, scale: torch.Tensor) -> torch.Tensor:
         return self.codec.decode(frames, scale)
-
-    def wmdecode(self, frames: torch.Tensor, marks: torch.Tensor, wav: torch.Tensor, scale: torch.Tensor):
-        out, _ = self.codec.wmdecode(frames.to(self.device), marks.to(self.device), wav.to(self.device), scale)
-        return out
-
-    def detect_watermark(self, wav: torch.Tensor):
-        marks = self.codec.detect_watermark(wav.to(self.device))
-        return marks
-
 
 def tokenize_audio(tokenizer: AudioTokenizer, audio_path: str, offset = -1, num_frames=-1, multiple=320):
     # Load and pre-process the audio waveform

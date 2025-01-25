@@ -72,9 +72,9 @@ def get_wmencodec_autoencoder(encoder_name: str, cfg: omegaconf.DictConfig):
         decoder_override_kwargs = kwargs.pop('decoder')
         encoder_kwargs = {**kwargs, **encoder_override_kwargs}
         decoder_kwargs = {**kwargs, **decoder_override_kwargs}
-        encoder = audiocraft.modules.SEANetEncoder(**encoder_kwargs)
-        decoder = audiocraft.modules.SEANetDecoder(**decoder_kwargs)
-        wmdecoder = audiocraft.modules.WMSEANetDecoder(**decoder_kwargs)
+        encoder = audiocraft.audiocraft.modules.SEANetEncoder(**encoder_kwargs)
+        decoder = audiocraft.audiocraft.modules.SEANetDecoder(**decoder_kwargs)
+        wmdecoder = audiocraft.audiocraft.modules.WMSEANetDecoder(**decoder_kwargs)
         return encoder, decoder, wmdecoder
     else:
         raise KeyError(f"Unexpected compression model {cfg.compression_model}")

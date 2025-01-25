@@ -4,13 +4,13 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 import typing as tp
-
-from einops import rearrange
-from librosa import filters
+#
+# from einops import rearrange
+# from librosa import filters
 import torch
 from torch import nn
-import torch.nn.functional as F
-import torchaudio
+# import torch.nn.functional as F
+# import torchaudio
 
 
 class ChromaExtractor(nn.Module):
