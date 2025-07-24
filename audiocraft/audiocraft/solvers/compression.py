@@ -283,6 +283,7 @@ class CompressionSolver(base.StandardSolver):
             name = checkpoint_path.split('/', 3)[-1]
             return models.CompressionModel.get_pretrained(name, device)
         logger = logging.getLogger(__name__)
+        logger.info(checkpoint_path)
         logger.info(f"Loading compression model from checkpoint: {checkpoint_path}")
         _checkpoint_path = checkpoint.resolve_checkpoint_path(checkpoint_path, use_fsdp=False)
         assert _checkpoint_path is not None, f"Could not resolve compression model checkpoint path: {checkpoint_path}"
@@ -313,6 +314,9 @@ class CompressionSolver(base.StandardSolver):
             use_ema (bool): Use EMA variant of the model instead of the actual model.
             device (torch.device or str): Device on which the model is loaded.
         """
+        logger.info(cfg)
+        logger.info(checkpoint_path)
+        logger.info(device)
         compression_model = CompressionSolver.model_from_checkpoint(checkpoint_path, device)
         compression_model = models.builders.get_wrapped_compression_model(compression_model, cfg)
         return compression_model

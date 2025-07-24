@@ -7,4 +7,3 @@
 """
 # flake8: noqa
 from .visqol import ViSQOL
-from .fad import FrechetAudioDistanceMetric

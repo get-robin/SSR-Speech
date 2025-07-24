@@ -9,3 +9,4 @@ optimizer, losses etc into a single convenient object.
 """
 
 # flake8: noqa
+from . import compression

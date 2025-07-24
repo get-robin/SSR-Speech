@@ -250,41 +250,6 @@ def get_visqol(cfg: omegaconf.DictConfig) -> metrics.ViSQOL:
     return metrics.ViSQOL(**kwargs)
 
 
-def get_fad(cfg: omegaconf.DictConfig) -> metrics.FrechetAudioDistanceMetric:
-    """Instantiate Frechet Audio Distance metric from config."""
-    kwargs = dict_from_config(cfg.tf)
-    xp = dora.get_xp()
-    kwargs['log_folder'] = xp.folder
-    return metrics.FrechetAudioDistanceMetric(**kwargs)
-
-
-def get_kldiv(cfg: omegaconf.DictConfig) -> metrics.KLDivergenceMetric:
-    """Instantiate KL-Divergence metric from config."""
-    kld_metrics = {
-        'passt': metrics.PasstKLDivergenceMetric,
-    }
-    klass = kld_metrics[cfg.model]
-    kwargs = dict_from_config(cfg.get(cfg.model))
-    return klass(**kwargs)
-
-
-def get_text_consistency(cfg: omegaconf.DictConfig) -> metrics.TextConsistencyMetric:
-    """Instantiate Text Consistency metric from config."""
-    text_consistency_metrics = {
-        'clap': metrics.CLAPTextConsistencyMetric
-    }
-    klass = text_consistency_metrics[cfg.model]
-    kwargs = dict_from_config(cfg.get(cfg.model))
-    return klass(**kwargs)
-
-
-def get_chroma_cosine_similarity(cfg: omegaconf.DictConfig) -> metrics.ChromaCosineSimilarityMetric:
-    """Instantiate Chroma Cosine Similarity metric from config."""
-    assert cfg.model == 'chroma_base', "Only support 'chroma_base' method for chroma cosine similarity metric"
-    kwargs = dict_from_config(cfg.get(cfg.model))
-    return metrics.ChromaCosineSimilarityMetric(**kwargs)
-
-
 def get_audio_datasets(cfg: omegaconf.DictConfig,
                        dataset_type: DatasetType = DatasetType.AUDIO) -> tp.Dict[str, torch.utils.data.DataLoader]:
     """Build AudioDataset from configuration.
